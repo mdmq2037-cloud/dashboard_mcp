@@ -33,7 +33,7 @@ def login():
     if request.method == 'POST':
         user = request.form.get('username', '')
         pwd  = request.form.get('password', '')
-        if user == os.getenv('LOGIN_USER') and pwd == os.getenv('LOGIN_PASSWORD'):
+        if db.check_user(user, pwd):
             session['logged_in'] = True
             return redirect(url_for('index'))
         error = 'Usuario o contraseña incorrectos'

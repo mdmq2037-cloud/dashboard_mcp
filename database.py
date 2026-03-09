@@ -56,6 +56,10 @@ class Database:
                     key   TEXT PRIMARY KEY,
                     value TEXT
                 )''')
+                cur.execute('''CREATE TABLE IF NOT EXISTS users (
+                    username TEXT PRIMARY KEY,
+                    password TEXT NOT NULL
+                )''')
                 cur.execute("SELECT value FROM settings WHERE key='initialized'")
                 if not cur.fetchone():
                     self._seed(cur)
@@ -84,6 +88,16 @@ class Database:
             'cargo':  row['cargo'] or '',
             'emails': json.loads(row['emails'] or '[]'),
         }
+
+    # ── Usuarios ──────────────────────────────────────────────────────────────
+    def check_user(self, username: str, password: str) -> bool:
+        with self._conn() as conn:
+            with conn.cursor() as cur:
+                cur.execute(
+                    'SELECT 1 FROM users WHERE username=%s AND password=%s',
+                    (username, password)
+                )
+                return cur.fetchone() is not None
 
     def get_activities(self) -> list:
         with self._conn() as conn:
