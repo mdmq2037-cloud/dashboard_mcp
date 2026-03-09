@@ -2,32 +2,73 @@
 app.py — Servidor Flask para Dashboard MCP
 Ejecutar: python app.py
 """
-from flask import Flask, jsonify, request, render_template
+import os
+from functools import wraps
+from flask import Flask, jsonify, request, render_template, session, redirect, url_for
+from dotenv import load_dotenv
 from database import Database
 
+load_dotenv()
+
 app = Flask(__name__)
-db  = Database('mcp_data.db')
+app.secret_key = os.getenv('SECRET_KEY', 'donet-secret-2024')
+db = Database()
 
 
-# ── Ruta principal ────────────────────────────────────────────────────────
+# ── Auth ──────────────────────────────────────────────────────────────────────
+def login_required(f):
+    @wraps(f)
+    def decorated(*args, **kwargs):
+        if not session.get('logged_in'):
+            return redirect(url_for('login'))
+        return f(*args, **kwargs)
+    return decorated
+
+
+@app.route('/login', methods=['GET', 'POST'])
+def login():
+    if session.get('logged_in'):
+        return redirect(url_for('index'))
+    error = None
+    if request.method == 'POST':
+        user = request.form.get('username', '')
+        pwd  = request.form.get('password', '')
+        if user == os.getenv('LOGIN_USER') and pwd == os.getenv('LOGIN_PASSWORD'):
+            session['logged_in'] = True
+            return redirect(url_for('index'))
+        error = 'Usuario o contraseña incorrectos'
+    return render_template('login.html', error=error)
+
+
+@app.route('/logout')
+def logout():
+    session.clear()
+    return redirect(url_for('login'))
+
+
+# ── Ruta principal ────────────────────────────────────────────────────────────
 @app.route('/')
+@login_required
 def index():
     return render_template('index.html')
 
 
-# ── API Actividades ───────────────────────────────────────────────────────
+# ── API Actividades ───────────────────────────────────────────────────────────
 @app.route('/api/activities', methods=['GET'])
+@login_required
 def get_activities():
     return jsonify(db.get_activities())
 
 
 @app.route('/api/activities', methods=['POST'])
+@login_required
 def create_activity():
     activity = db.add_activity(request.get_json(force=True))
     return jsonify(activity), 201
 
 
 @app.route('/api/activities/<aid>', methods=['PUT'])
+@login_required
 def update_activity(aid):
     activity = db.update_activity(aid, request.get_json(force=True))
     if activity:
@@ -36,24 +77,28 @@ def update_activity(aid):
 
 
 @app.route('/api/activities/<aid>', methods=['DELETE'])
+@login_required
 def delete_activity(aid):
     db.delete_activity(aid)
     return jsonify({'ok': True})
 
 
-# ── API Contactos ─────────────────────────────────────────────────────────
+# ── API Contactos ─────────────────────────────────────────────────────────────
 @app.route('/api/contacts', methods=['GET'])
+@login_required
 def get_contacts():
     return jsonify(db.get_contacts())
 
 
 @app.route('/api/contacts', methods=['POST'])
+@login_required
 def create_contact():
     contact = db.add_contact(request.get_json(force=True))
     return jsonify(contact), 201
 
 
 @app.route('/api/contacts/<cid>', methods=['PUT'])
+@login_required
 def update_contact(cid):
     contact = db.update_contact(cid, request.get_json(force=True))
     if contact:
@@ -62,12 +107,13 @@ def update_contact(cid):
 
 
 @app.route('/api/contacts/<cid>', methods=['DELETE'])
+@login_required
 def delete_contact(cid):
     db.delete_contact(cid)
     return jsonify({'ok': True})
 
 
-# ── Main ──────────────────────────────────────────────────────────────────
+# ── Main ──────────────────────────────────────────────────────────────────────
 if __name__ == '__main__':
     import socket
     try:

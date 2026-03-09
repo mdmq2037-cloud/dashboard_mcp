@@ -1,0 +1,209 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>DONET — Iniciar Sesión</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      font-family: 'Inter', sans-serif;
+      min-height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      background: radial-gradient(ellipse at center, #0d2444 0%, #071426 60%, #040d1a 100%);
+    }
+
+    .container {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 24px;
+      width: 100%;
+      max-width: 420px;
+      padding: 20px;
+    }
+
+    /* ── Logo ── */
+    .logo-ring {
+      width: 130px;
+      height: 130px;
+      border-radius: 50%;
+      background: #0a1628;
+      border: 3px solid #00d4e8;
+      box-shadow: 0 0 20px #00d4e8, 0 0 40px rgba(0,212,232,0.4), inset 0 0 20px rgba(0,212,232,0.1);
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      gap: 4px;
+    }
+
+    .logo-icons {
+      display: flex;
+      gap: 6px;
+      align-items: flex-end;
+      margin-bottom: 2px;
+    }
+
+    .bar {
+      background: linear-gradient(to top, #00b8cc, #00e5ff);
+      border-radius: 2px;
+      width: 8px;
+    }
+
+    .logo-text {
+      font-size: 22px;
+      font-weight: 700;
+      letter-spacing: 2px;
+      background: linear-gradient(135deg, #00d4e8 0%, #0090aa 50%, #005f73 100%);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+    }
+
+    /* ── Título ── */
+    .title {
+      font-size: 17px;
+      font-weight: 700;
+      letter-spacing: 1.5px;
+      color: #00d4e8;
+      text-align: center;
+    }
+
+    /* ── Card ── */
+    .card {
+      background: #111e30;
+      border: 1px solid rgba(0,212,232,0.15);
+      border-radius: 12px;
+      padding: 36px 32px;
+      width: 100%;
+      box-shadow: 0 8px 32px rgba(0,0,0,0.5);
+    }
+
+    .card h2 {
+      text-align: center;
+      color: #ffffff;
+      font-size: 18px;
+      font-weight: 600;
+      margin-bottom: 28px;
+    }
+
+    .field {
+      margin-bottom: 16px;
+    }
+
+    .field input {
+      width: 100%;
+      padding: 14px 16px;
+      background: #0d1a2b;
+      border: 1px solid rgba(255,255,255,0.15);
+      border-radius: 8px;
+      color: #ffffff;
+      font-size: 14px;
+      font-family: 'Inter', sans-serif;
+      outline: none;
+      transition: border-color 0.2s;
+    }
+
+    .field input::placeholder { color: rgba(255,255,255,0.4); }
+
+    .field input:focus {
+      border-color: #00d4e8;
+      box-shadow: 0 0 0 2px rgba(0,212,232,0.15);
+    }
+
+    .error {
+      background: rgba(220,38,38,0.15);
+      border: 1px solid rgba(220,38,38,0.4);
+      border-radius: 6px;
+      color: #f87171;
+      font-size: 13px;
+      padding: 10px 14px;
+      margin-bottom: 16px;
+      text-align: center;
+    }
+
+    .btn {
+      width: 100%;
+      padding: 14px;
+      background: linear-gradient(135deg, #00b8cc, #0090aa);
+      border: none;
+      border-radius: 8px;
+      color: #ffffff;
+      font-size: 15px;
+      font-weight: 700;
+      letter-spacing: 2px;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 10px;
+      transition: opacity 0.2s, box-shadow 0.2s;
+      margin-top: 8px;
+    }
+
+    .btn:hover {
+      opacity: 0.9;
+      box-shadow: 0 4px 16px rgba(0,180,200,0.4);
+    }
+
+    .btn svg { width: 18px; height: 18px; }
+
+    /* ── Footer ── */
+    .footer {
+      color: rgba(255,255,255,0.35);
+      font-size: 12px;
+      text-align: center;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+
+    <!-- Logo -->
+    <div class="logo-ring">
+      <div class="logo-icons">
+        <div class="bar" style="height:14px;"></div>
+        <div class="bar" style="height:22px;"></div>
+        <div class="bar" style="height:10px;"></div>
+        <div class="bar" style="height:18px;"></div>
+      </div>
+      <div class="logo-text">DONET</div>
+    </div>
+
+    <!-- Título -->
+    <div class="title">APLICACIONES DONET — CHECKLIST</div>
+
+    <!-- Card -->
+    <div class="card">
+      <h2>Iniciar Sesión</h2>
+
+      {% if error %}
+      <div class="error">{{ error }}</div>
+      {% endif %}
+
+      <form method="POST" action="/login">
+        <div class="field">
+          <input type="text" name="username" placeholder="Usuario" required autocomplete="username">
+        </div>
+        <div class="field">
+          <input type="password" name="password" placeholder="Contraseña" required autocomplete="current-password">
+        </div>
+        <button type="submit" class="btn">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+            <path d="M5 12h14M12 5l7 7-7 7"/>
+          </svg>
+          ENTRAR
+        </button>
+      </form>
+    </div>
+
+    <div class="footer">© 2024 DONET — Todos los derechos reservados</div>
+  </div>
+</body>
+</html>

@@ -1,61 +1,66 @@
 """
-database.py — Capa de datos SQLite para Dashboard MCP
+database.py — Capa de datos PostgreSQL (Supabase) para Dashboard MCP
 """
-import sqlite3
+import os
 import json
 import time
 import random
 import string
 from datetime import datetime
 
+import psycopg2
+import psycopg2.extras
+from dotenv import load_dotenv
+
+load_dotenv()
+
+
+def _get_conn():
+    return psycopg2.connect(os.getenv('DATABASE_URL'), sslmode='require')
+
 
 class Database:
-    def __init__(self, db_path: str = 'mcp_data.db'):
-        self.db_path = db_path
+    def __init__(self, _unused=None):
         self._init_db()
 
-    # ── Conexión ──────────────────────────────────────────────────────────
     def _conn(self):
-        conn = sqlite3.connect(self.db_path)
-        conn.row_factory = sqlite3.Row
-        return conn
+        return _get_conn()
 
     def _gen_id(self) -> str:
         ts   = time.strftime('%Y%m%d%H%M%S')
         rand = ''.join(random.choices(string.ascii_lowercase + string.digits, k=5))
         return ts + rand
 
-    # ── Inicialización de tablas ──────────────────────────────────────────
     def _init_db(self):
         with self._conn() as conn:
-            conn.execute('''CREATE TABLE IF NOT EXISTS activities (
-                id           TEXT PRIMARY KEY,
-                nombre       TEXT NOT NULL,
-                tipo         TEXT,
-                fecha_entrega  TEXT,
-                fecha_analisis TEXT,
-                fecha_envio    TEXT,
-                estado       TEXT DEFAULT 'pendiente',
-                contacto_id  TEXT,
-                observaciones TEXT,
-                created_at   TEXT
-            )''')
-            conn.execute('''CREATE TABLE IF NOT EXISTS contacts (
-                id     TEXT PRIMARY KEY,
-                nombre TEXT NOT NULL,
-                cargo  TEXT,
-                emails TEXT
-            )''')
-            conn.execute('''CREATE TABLE IF NOT EXISTS settings (
-                key   TEXT PRIMARY KEY,
-                value TEXT
-            )''')
-            cur = conn.execute("SELECT value FROM settings WHERE key='initialized'")
-            if not cur.fetchone():
-                self._seed(conn)
-                conn.execute("INSERT INTO settings VALUES ('initialized','1')")
+            with conn.cursor() as cur:
+                cur.execute('''CREATE TABLE IF NOT EXISTS activities (
+                    id            TEXT PRIMARY KEY,
+                    nombre        TEXT NOT NULL,
+                    tipo          TEXT,
+                    fecha_entrega   TEXT,
+                    fecha_analisis  TEXT,
+                    fecha_envio     TEXT,
+                    estado        TEXT DEFAULT 'pendiente',
+                    contacto_id   TEXT,
+                    observaciones TEXT,
+                    created_at    TEXT
+                )''')
+                cur.execute('''CREATE TABLE IF NOT EXISTS contacts (
+                    id     TEXT PRIMARY KEY,
+                    nombre TEXT NOT NULL,
+                    cargo  TEXT,
+                    emails TEXT
+                )''')
+                cur.execute('''CREATE TABLE IF NOT EXISTS settings (
+                    key   TEXT PRIMARY KEY,
+                    value TEXT
+                )''')
+                cur.execute("SELECT value FROM settings WHERE key='initialized'")
+                if not cur.fetchone():
+                    self._seed(cur)
+                    cur.execute("INSERT INTO settings VALUES ('initialized','1')")
 
-    # ── Conversores row → dict ────────────────────────────────────────────
     @staticmethod
     def _to_activity(row) -> dict:
         return {
@@ -80,92 +85,95 @@ class Database:
             'emails': json.loads(row['emails'] or '[]'),
         }
 
-    # ── Actividades ───────────────────────────────────────────────────────
     def get_activities(self) -> list:
         with self._conn() as conn:
-            rows = conn.execute(
-                'SELECT * FROM activities ORDER BY created_at'
-            ).fetchall()
+            with conn.cursor(cursor_factory=psycopg2.extras.RealDictCursor) as cur:
+                cur.execute('SELECT * FROM activities ORDER BY created_at')
+                rows = cur.fetchall()
         return [self._to_activity(r) for r in rows]
 
     def add_activity(self, data: dict) -> dict:
         aid = self._gen_id()
         now = datetime.now().isoformat()
         with self._conn() as conn:
-            conn.execute(
-                '''INSERT INTO activities VALUES (?,?,?,?,?,?,?,?,?,?)''',
-                (aid,
-                 data.get('nombre'),        data.get('tipo'),
-                 data.get('fechaEntrega'),  data.get('fechaAnalisis'),
-                 data.get('fechaEnvio'),    data.get('estado', 'pendiente'),
-                 data.get('contactoId'),    data.get('observaciones'),
-                 now)
-            )
+            with conn.cursor() as cur:
+                cur.execute(
+                    'INSERT INTO activities VALUES (%s,%s,%s,%s,%s,%s,%s,%s,%s,%s)',
+                    (aid,
+                     data.get('nombre'),        data.get('tipo'),
+                     data.get('fechaEntrega'),  data.get('fechaAnalisis'),
+                     data.get('fechaEnvio'),    data.get('estado', 'pendiente'),
+                     data.get('contactoId'),    data.get('observaciones'),
+                     now)
+                )
         return {**data, 'id': aid, 'createdAt': now}
 
     def update_activity(self, aid: str, data: dict) -> dict | None:
         with self._conn() as conn:
-            conn.execute(
-                '''UPDATE activities
-                   SET nombre=?, tipo=?, fecha_entrega=?, fecha_analisis=?,
-                       fecha_envio=?, estado=?, contacto_id=?, observaciones=?
-                   WHERE id=?''',
-                (data.get('nombre'),        data.get('tipo'),
-                 data.get('fechaEntrega'),  data.get('fechaAnalisis'),
-                 data.get('fechaEnvio'),    data.get('estado'),
-                 data.get('contactoId'),    data.get('observaciones'),
-                 aid)
-            )
-            row = conn.execute(
-                'SELECT * FROM activities WHERE id=?', (aid,)
-            ).fetchone()
+            with conn.cursor(cursor_factory=psycopg2.extras.RealDictCursor) as cur:
+                cur.execute(
+                    '''UPDATE activities
+                       SET nombre=%s, tipo=%s, fecha_entrega=%s, fecha_analisis=%s,
+                           fecha_envio=%s, estado=%s, contacto_id=%s, observaciones=%s
+                       WHERE id=%s''',
+                    (data.get('nombre'),        data.get('tipo'),
+                     data.get('fechaEntrega'),  data.get('fechaAnalisis'),
+                     data.get('fechaEnvio'),    data.get('estado'),
+                     data.get('contactoId'),    data.get('observaciones'),
+                     aid)
+                )
+                cur.execute('SELECT * FROM activities WHERE id=%s', (aid,))
+                row = cur.fetchone()
         return self._to_activity(row) if row else None
 
     def delete_activity(self, aid: str):
         with self._conn() as conn:
-            conn.execute('DELETE FROM activities WHERE id=?', (aid,))
+            with conn.cursor() as cur:
+                cur.execute('DELETE FROM activities WHERE id=%s', (aid,))
 
-    # ── Contactos ─────────────────────────────────────────────────────────
     def get_contacts(self) -> list:
         with self._conn() as conn:
-            rows = conn.execute('SELECT * FROM contacts').fetchall()
+            with conn.cursor(cursor_factory=psycopg2.extras.RealDictCursor) as cur:
+                cur.execute('SELECT * FROM contacts')
+                rows = cur.fetchall()
         return [self._to_contact(r) for r in rows]
 
     def add_contact(self, data: dict) -> dict:
         cid = self._gen_id()
         with self._conn() as conn:
-            conn.execute(
-                'INSERT INTO contacts VALUES (?,?,?,?)',
-                (cid, data.get('nombre'), data.get('cargo'),
-                 json.dumps(data.get('emails', [])))
-            )
+            with conn.cursor() as cur:
+                cur.execute(
+                    'INSERT INTO contacts VALUES (%s,%s,%s,%s)',
+                    (cid, data.get('nombre'), data.get('cargo'),
+                     json.dumps(data.get('emails', [])))
+                )
         return {**data, 'id': cid}
 
     def update_contact(self, cid: str, data: dict) -> dict | None:
         with self._conn() as conn:
-            conn.execute(
-                'UPDATE contacts SET nombre=?, cargo=?, emails=? WHERE id=?',
-                (data.get('nombre'), data.get('cargo'),
-                 json.dumps(data.get('emails', [])), cid)
-            )
-            row = conn.execute(
-                'SELECT * FROM contacts WHERE id=?', (cid,)
-            ).fetchone()
+            with conn.cursor(cursor_factory=psycopg2.extras.RealDictCursor) as cur:
+                cur.execute(
+                    'UPDATE contacts SET nombre=%s, cargo=%s, emails=%s WHERE id=%s',
+                    (data.get('nombre'), data.get('cargo'),
+                     json.dumps(data.get('emails', [])), cid)
+                )
+                cur.execute('SELECT * FROM contacts WHERE id=%s', (cid,))
+                row = cur.fetchone()
         return self._to_contact(row) if row else None
 
     def delete_contact(self, cid: str):
         with self._conn() as conn:
-            conn.execute('DELETE FROM contacts WHERE id=?', (cid,))
+            with conn.cursor() as cur:
+                cur.execute('DELETE FROM contacts WHERE id=%s', (cid,))
 
-    # ── Datos de ejemplo ──────────────────────────────────────────────────
-    def _seed(self, conn):
+    def _seed(self, cur):
         contacts = [
             ('c1', 'María García',     'Jefa de RR.HH.',         '["m.garcia@empresa.com","rrhh@empresa.com"]'),
             ('c2', 'Carlos Rodríguez', 'Contador General',        '["c.rodriguez@empresa.com","contabilidad@empresa.com"]'),
             ('c3', 'Ana Torres',       'Gerencia General',        '["a.torres@empresa.com"]'),
             ('c4', 'Luis Mendoza',     'Asistente de Planillas',  '["l.mendoza@empresa.com"]'),
         ]
-        conn.executemany('INSERT INTO contacts VALUES (?,?,?,?)', contacts)
+        cur.executemany('INSERT INTO contacts VALUES (%s,%s,%s,%s)', contacts)
 
         now = datetime.now().isoformat()
         activities = [
@@ -179,6 +187,6 @@ class Database:
             ('a8','1ra Quincena — Liquidación Feb',  'quincena1','2026-02-10','2026-02-11','2026-02-13','completado','c1','Completado sin observaciones',now),
             ('a9','Planilla Mensual — Remuneraciones Feb','planilla','2026-02-25','2026-02-27','2026-02-28','completado','c1','',now),
         ]
-        conn.executemany(
-            'INSERT INTO activities VALUES (?,?,?,?,?,?,?,?,?,?)', activities
+        cur.executemany(
+            'INSERT INTO activities VALUES (%s,%s,%s,%s,%s,%s,%s,%s,%s,%s)', activities
         )
