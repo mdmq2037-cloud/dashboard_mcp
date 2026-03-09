@@ -2,11 +2,14 @@
 app.py — Servidor Flask para Dashboard MCP
 Ejecutar: python app.py
 """
+from dotenv import load_dotenv
+load_dotenv()
+
 from flask import Flask, jsonify, request, render_template
 from database import Database
 
 app = Flask(__name__)
-db  = Database('mcp_data.db')
+db  = Database()
 
 
 # ── Ruta principal ────────────────────────────────────────────────────────

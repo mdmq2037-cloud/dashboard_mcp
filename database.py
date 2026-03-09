@@ -1,63 +1,67 @@
 """
-database.py — Capa de datos SQLite para Dashboard MCP
+database.py — Capa de datos Supabase para Dashboard MCP
 """
-import sqlite3
+import os
 import json
 import time
 import random
 import string
 from datetime import datetime
+from supabase import create_client, Client
+
+
+def _get_client() -> Client:
+    url = os.environ.get('SUPABASE_URL')
+    key = os.environ.get('SUPABASE_KEY')
+    if not url or not key:
+        raise RuntimeError('Faltan SUPABASE_URL o SUPABASE_KEY en el archivo .env')
+    return create_client(url, key)
 
 
 class Database:
-    def __init__(self, db_path: str = 'mcp_data.db'):
-        self.db_path = db_path
-        self._init_db()
-
-    # ── Conexión ──────────────────────────────────────────────────────────
-    def _conn(self):
-        conn = sqlite3.connect(self.db_path)
-        conn.row_factory = sqlite3.Row
-        return conn
+    def __init__(self):
+        self.sb: Client = _get_client()
+        self._ensure_seeded()
 
     def _gen_id(self) -> str:
         ts   = time.strftime('%Y%m%d%H%M%S')
         rand = ''.join(random.choices(string.ascii_lowercase + string.digits, k=5))
         return ts + rand
 
-    # ── Inicialización de tablas ──────────────────────────────────────────
-    def _init_db(self):
-        with self._conn() as conn:
-            conn.execute('''CREATE TABLE IF NOT EXISTS activities (
-                id           TEXT PRIMARY KEY,
-                nombre       TEXT NOT NULL,
-                tipo         TEXT,
-                fecha_entrega  TEXT,
-                fecha_analisis TEXT,
-                fecha_envio    TEXT,
-                estado       TEXT DEFAULT 'pendiente',
-                contacto_id  TEXT,
-                observaciones TEXT,
-                created_at   TEXT
-            )''')
-            conn.execute('''CREATE TABLE IF NOT EXISTS contacts (
-                id     TEXT PRIMARY KEY,
-                nombre TEXT NOT NULL,
-                cargo  TEXT,
-                emails TEXT
-            )''')
-            conn.execute('''CREATE TABLE IF NOT EXISTS settings (
-                key   TEXT PRIMARY KEY,
-                value TEXT
-            )''')
-            cur = conn.execute("SELECT value FROM settings WHERE key='initialized'")
-            if not cur.fetchone():
-                self._seed(conn)
-                conn.execute("INSERT INTO settings VALUES ('initialized','1')")
+    # ── Seed inicial ──────────────────────────────────────────────────────
+    def _ensure_seeded(self):
+        res = self.sb.table('settings').select('value').eq('key', 'initialized').execute()
+        if res.data:
+            return
+        self._seed()
+        self.sb.table('settings').insert({'key': 'initialized', 'value': '1'}).execute()
 
-    # ── Conversores row → dict ────────────────────────────────────────────
+    def _seed(self):
+        contacts = [
+            {'id': 'c1', 'nombre': 'María García',     'cargo': 'Jefa de RR.HH.',        'emails': json.dumps(['m.garcia@empresa.com', 'rrhh@empresa.com'])},
+            {'id': 'c2', 'nombre': 'Carlos Rodríguez', 'cargo': 'Contador General',       'emails': json.dumps(['c.rodriguez@empresa.com', 'contabilidad@empresa.com'])},
+            {'id': 'c3', 'nombre': 'Ana Torres',       'cargo': 'Gerencia General',       'emails': json.dumps(['a.torres@empresa.com'])},
+            {'id': 'c4', 'nombre': 'Luis Mendoza',     'cargo': 'Asistente de Planillas', 'emails': json.dumps(['l.mendoza@empresa.com'])},
+        ]
+        self.sb.table('contacts').insert(contacts).execute()
+
+        now = datetime.now().isoformat()
+        activities = [
+            {'id': 'a1', 'nombre': '1ra Quincena — Remuneraciones',       'tipo': 'quincena1', 'fecha_entrega': '2026-03-10', 'fecha_analisis': '2026-03-11', 'fecha_envio': '2026-03-13', 'estado': 'en_proceso', 'contacto_id': 'c1', 'observaciones': 'Incluir horas extras del período 1-15',      'created_at': now},
+            {'id': 'a2', 'nombre': 'Retención AFP / ONP',                  'tipo': 'planilla',  'fecha_entrega': '2026-03-12', 'fecha_analisis': '2026-03-13', 'fecha_envio': '2026-03-15', 'estado': 'pendiente',  'contacto_id': 'c2', 'observaciones': 'Verificar nuevos afiliados del mes',          'created_at': now},
+            {'id': 'a3', 'nombre': 'Declaración PDT PLAME Mensual',        'tipo': 'planilla',  'fecha_entrega': '2026-03-20', 'fecha_analisis': '2026-03-22', 'fecha_envio': '2026-03-25', 'estado': 'pendiente',  'contacto_id': 'c2', 'observaciones': 'SUNAT — Formulario Virtual 601',               'created_at': now},
+            {'id': 'a4', 'nombre': 'Planilla Mensual — Remuneraciones',    'tipo': 'planilla',  'fecha_entrega': '2026-03-25', 'fecha_analisis': '2026-03-27', 'fecha_envio': '2026-03-30', 'estado': 'pendiente',  'contacto_id': 'c1', 'observaciones': 'Planilla completa del mes de marzo',             'created_at': now},
+            {'id': 'a5', 'nombre': '2da Quincena — Remuneraciones',        'tipo': 'quincena2', 'fecha_entrega': '2026-03-25', 'fecha_analisis': '2026-03-26', 'fecha_envio': '2026-03-28', 'estado': 'pendiente',  'contacto_id': 'c1', 'observaciones': '',                                              'created_at': now},
+            {'id': 'a6', 'nombre': 'EsSalud — Declaración y Pago',         'tipo': 'planilla',  'fecha_entrega': '2026-03-20', 'fecha_analisis': '2026-03-21', 'fecha_envio': '2026-03-23', 'estado': 'pendiente',  'contacto_id': 'c2', 'observaciones': '9% de la remuneración asegurable',              'created_at': now},
+            {'id': 'a7', 'nombre': 'Seguro de Vida Ley',                   'tipo': 'planilla',  'fecha_entrega': '2026-03-18', 'fecha_analisis': '2026-03-19', 'fecha_envio': '2026-03-21', 'estado': 'pendiente',  'contacto_id': 'c4', 'observaciones': 'Verificar nómina de beneficiarios activos',     'created_at': now},
+            {'id': 'a8', 'nombre': '1ra Quincena — Liquidación Feb',       'tipo': 'quincena1', 'fecha_entrega': '2026-02-10', 'fecha_analisis': '2026-02-11', 'fecha_envio': '2026-02-13', 'estado': 'completado', 'contacto_id': 'c1', 'observaciones': 'Completado sin observaciones',                 'created_at': now},
+            {'id': 'a9', 'nombre': 'Planilla Mensual — Remuneraciones Feb','tipo': 'planilla',  'fecha_entrega': '2026-02-25', 'fecha_analisis': '2026-02-27', 'fecha_envio': '2026-02-28', 'estado': 'completado', 'contacto_id': 'c1', 'observaciones': '',                                              'created_at': now},
+        ]
+        self.sb.table('activities').insert(activities).execute()
+
+    # ── Conversor row → dict ──────────────────────────────────────────────
     @staticmethod
-    def _to_activity(row) -> dict:
+    def _to_activity(row: dict) -> dict:
         return {
             'id':            row['id'],
             'nombre':        row['nombre'],
@@ -72,7 +76,7 @@ class Database:
         }
 
     @staticmethod
-    def _to_contact(row) -> dict:
+    def _to_contact(row: dict) -> dict:
         return {
             'id':     row['id'],
             'nombre': row['nombre'],
@@ -82,103 +86,70 @@ class Database:
 
     # ── Actividades ───────────────────────────────────────────────────────
     def get_activities(self) -> list:
-        with self._conn() as conn:
-            rows = conn.execute(
-                'SELECT * FROM activities ORDER BY created_at'
-            ).fetchall()
-        return [self._to_activity(r) for r in rows]
+        res = self.sb.table('activities').select('*').order('created_at').execute()
+        return [self._to_activity(r) for r in res.data]
 
     def add_activity(self, data: dict) -> dict:
         aid = self._gen_id()
         now = datetime.now().isoformat()
-        with self._conn() as conn:
-            conn.execute(
-                '''INSERT INTO activities VALUES (?,?,?,?,?,?,?,?,?,?)''',
-                (aid,
-                 data.get('nombre'),        data.get('tipo'),
-                 data.get('fechaEntrega'),  data.get('fechaAnalisis'),
-                 data.get('fechaEnvio'),    data.get('estado', 'pendiente'),
-                 data.get('contactoId'),    data.get('observaciones'),
-                 now)
-            )
+        row = {
+            'id':            aid,
+            'nombre':        data.get('nombre'),
+            'tipo':          data.get('tipo'),
+            'fecha_entrega': data.get('fechaEntrega'),
+            'fecha_analisis':data.get('fechaAnalisis'),
+            'fecha_envio':   data.get('fechaEnvio'),
+            'estado':        data.get('estado', 'pendiente'),
+            'contacto_id':   data.get('contactoId'),
+            'observaciones': data.get('observaciones'),
+            'created_at':    now,
+        }
+        self.sb.table('activities').insert(row).execute()
         return {**data, 'id': aid, 'createdAt': now}
 
     def update_activity(self, aid: str, data: dict) -> dict | None:
-        with self._conn() as conn:
-            conn.execute(
-                '''UPDATE activities
-                   SET nombre=?, tipo=?, fecha_entrega=?, fecha_analisis=?,
-                       fecha_envio=?, estado=?, contacto_id=?, observaciones=?
-                   WHERE id=?''',
-                (data.get('nombre'),        data.get('tipo'),
-                 data.get('fechaEntrega'),  data.get('fechaAnalisis'),
-                 data.get('fechaEnvio'),    data.get('estado'),
-                 data.get('contactoId'),    data.get('observaciones'),
-                 aid)
-            )
-            row = conn.execute(
-                'SELECT * FROM activities WHERE id=?', (aid,)
-            ).fetchone()
-        return self._to_activity(row) if row else None
+        updates = {
+            'nombre':        data.get('nombre'),
+            'tipo':          data.get('tipo'),
+            'fecha_entrega': data.get('fechaEntrega'),
+            'fecha_analisis':data.get('fechaAnalisis'),
+            'fecha_envio':   data.get('fechaEnvio'),
+            'estado':        data.get('estado'),
+            'contacto_id':   data.get('contactoId'),
+            'observaciones': data.get('observaciones'),
+        }
+        self.sb.table('activities').update(updates).eq('id', aid).execute()
+        res = self.sb.table('activities').select('*').eq('id', aid).execute()
+        return self._to_activity(res.data[0]) if res.data else None
 
     def delete_activity(self, aid: str):
-        with self._conn() as conn:
-            conn.execute('DELETE FROM activities WHERE id=?', (aid,))
+        self.sb.table('activities').delete().eq('id', aid).execute()
 
     # ── Contactos ─────────────────────────────────────────────────────────
     def get_contacts(self) -> list:
-        with self._conn() as conn:
-            rows = conn.execute('SELECT * FROM contacts').fetchall()
-        return [self._to_contact(r) for r in rows]
+        res = self.sb.table('contacts').select('*').execute()
+        return [self._to_contact(r) for r in res.data]
 
     def add_contact(self, data: dict) -> dict:
         cid = self._gen_id()
-        with self._conn() as conn:
-            conn.execute(
-                'INSERT INTO contacts VALUES (?,?,?,?)',
-                (cid, data.get('nombre'), data.get('cargo'),
-                 json.dumps(data.get('emails', [])))
-            )
+        row = {
+            'id':     cid,
+            'nombre': data.get('nombre'),
+            'cargo':  data.get('cargo'),
+            'emails': json.dumps(data.get('emails', [])),
+        }
+        self.sb.table('contacts').insert(row).execute()
         return {**data, 'id': cid}
 
     def update_contact(self, cid: str, data: dict) -> dict | None:
-        with self._conn() as conn:
-            conn.execute(
-                'UPDATE contacts SET nombre=?, cargo=?, emails=? WHERE id=?',
-                (data.get('nombre'), data.get('cargo'),
-                 json.dumps(data.get('emails', [])), cid)
-            )
-            row = conn.execute(
-                'SELECT * FROM contacts WHERE id=?', (cid,)
-            ).fetchone()
-        return self._to_contact(row) if row else None
+        updates = {
+            'nombre': data.get('nombre'),
+            'cargo':  data.get('cargo'),
+            'emails': json.dumps(data.get('emails', [])),
+        }
+        self.sb.table('contacts').update(updates).eq('id', cid).execute()
+        res = self.sb.table('contacts').select('*').eq('id', cid).execute()
+        return self._to_contact(res.data[0]) if res.data else None
 
     def delete_contact(self, cid: str):
-        with self._conn() as conn:
-            conn.execute('DELETE FROM contacts WHERE id=?', (cid,))
-
-    # ── Datos de ejemplo ──────────────────────────────────────────────────
-    def _seed(self, conn):
-        contacts = [
-            ('c1', 'María García',     'Jefa de RR.HH.',         '["m.garcia@empresa.com","rrhh@empresa.com"]'),
-            ('c2', 'Carlos Rodríguez', 'Contador General',        '["c.rodriguez@empresa.com","contabilidad@empresa.com"]'),
-            ('c3', 'Ana Torres',       'Gerencia General',        '["a.torres@empresa.com"]'),
-            ('c4', 'Luis Mendoza',     'Asistente de Planillas',  '["l.mendoza@empresa.com"]'),
-        ]
-        conn.executemany('INSERT INTO contacts VALUES (?,?,?,?)', contacts)
-
-        now = datetime.now().isoformat()
-        activities = [
-            ('a1','1ra Quincena — Remuneraciones',  'quincena1','2026-03-10','2026-03-11','2026-03-13','en_proceso','c1','Incluir horas extras del período 1-15',now),
-            ('a2','Retención AFP / ONP',             'planilla', '2026-03-12','2026-03-13','2026-03-15','pendiente', 'c2','Verificar nuevos afiliados del mes',now),
-            ('a3','Declaración PDT PLAME Mensual',   'planilla', '2026-03-20','2026-03-22','2026-03-25','pendiente', 'c2','SUNAT — Formulario Virtual 601',now),
-            ('a4','Planilla Mensual — Remuneraciones','planilla','2026-03-25','2026-03-27','2026-03-30','pendiente', 'c1','Planilla completa del mes de marzo',now),
-            ('a5','2da Quincena — Remuneraciones',   'quincena2','2026-03-25','2026-03-26','2026-03-28','pendiente', 'c1','',now),
-            ('a6','EsSalud — Declaración y Pago',    'planilla', '2026-03-20','2026-03-21','2026-03-23','pendiente', 'c2','9% de la remuneración asegurable',now),
-            ('a7','Seguro de Vida Ley',              'planilla', '2026-03-18','2026-03-19','2026-03-21','pendiente', 'c4','Verificar nómina de beneficiarios activos',now),
-            ('a8','1ra Quincena — Liquidación Feb',  'quincena1','2026-02-10','2026-02-11','2026-02-13','completado','c1','Completado sin observaciones',now),
-            ('a9','Planilla Mensual — Remuneraciones Feb','planilla','2026-02-25','2026-02-27','2026-02-28','completado','c1','',now),
-        ]
-        conn.executemany(
-            'INSERT INTO activities VALUES (?,?,?,?,?,?,?,?,?,?)', activities
-        )
+        self.sb.table('contacts').delete().eq('id', cid).execute()
