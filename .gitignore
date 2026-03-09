@@ -1,0 +1,31 @@
+# Entorno
+.env
+.env.local
+.env.*.local
+
+# Credenciales y secretos
+*.key
+*.pem
+credentials.json
+secrets.json
+
+# Editores
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# OS
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# Logs
+*.log
+logs/
+
+# Node (por si se agrega build)
+node_modules/
+dist/
+build/

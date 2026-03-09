@@ -1,0 +1,109 @@
+# Plan de Desarrollo: Dashboard MCP - Control de Tareas Planilla/Quincena
+
+## Descripción del Proyecto
+Aplicativo web responsive (PC y móvil) para el control de tareas de planilla y quincena, con checklist de actividades establecidas, fechas clave, personas de contacto y correos electrónicos de envío.
+
+## Stack Tecnológico
+- **Frontend:** HTML5 + CSS3 + JavaScript Vanilla
+- **Estilos:** Tailwind CSS (CDN) — sin build process
+- **Almacenamiento:** localStorage (sin backend, sin dependencias)
+- **Íconos:** Font Awesome (CDN)
+- **Repositorio:** GitHub — https://github.com/mdmq2037-cloud/dashboard_mcp.git
+
+## Estructura de Archivos
+```
+dashboard_mcp/
+├── index.html          # App principal (SPA)
+├── css/
+│   └── app.css         # Estilos personalizados
+├── js/
+│   ├── app.js          # Lógica principal
+│   ├── data.js         # Gestión de datos (localStorage)
+│   └── ui.js           # Renderizado de UI
+├── .gitignore
+├── Informe.md
+└── tasks/
+    └── todo.md
+```
+
+## Funcionalidades del Aplicativo
+
+### Módulo Principal — Dashboard
+- Vista resumen: actividades pendientes, en proceso, completadas
+- Indicadores visuales (semáforo) por fechas próximas o vencidas
+- Filtro por estado, mes y tipo (planilla / quincena)
+
+### Módulo — Actividades (Checklist)
+Cada actividad tiene:
+- Nombre/descripción de la actividad
+- Tipo: Planilla | 1ra Quincena | 2da Quincena
+- **Fecha de entrega de información** (input)
+- **Fecha de análisis** (input)
+- **Fecha de envío de información** (input)
+- Estado: Pendiente | En proceso | Completado
+- Observaciones/notas
+
+### Módulo — Contactos
+- Persona de contacto (nombre + cargo)
+- Correo(s) electrónico(s) de envío
+- Asociado a cada actividad
+
+### Funcionalidades UX
+- Responsive: PC (tabla) y móvil (tarjetas)
+- CRUD completo: agregar, editar, eliminar actividades
+- Marcar como completado con checkbox
+- Exportar a CSV básico
+- Notificación visual cuando fecha está próxima (≤3 días)
+
+---
+
+## Tareas
+
+### Fase 1 — Inicialización del Repositorio
+- [ ] 1.1 Git init + .gitignore + commit inicial
+- [ ] 1.2 Crear estructura de directorios y archivos base
+
+### Fase 2 — HTML Base y Layout Responsive
+- [ ] 2.1 index.html con estructura semántica y Tailwind CDN
+- [ ] 2.2 Navbar responsive con menú hamburguesa en móvil
+- [ ] 2.3 Layout: sidebar/tabs para Dashboard, Actividades, Contactos
+
+### Fase 3 — Módulo Dashboard
+- [ ] 3.1 Tarjetas resumen (total, pendientes, en proceso, completados)
+- [ ] 3.2 Lista de próximas fechas de entrega (ordenadas)
+- [ ] 3.3 Indicadores visuales de alertas por fecha
+
+### Fase 4 — Módulo Actividades (CRUD)
+- [ ] 4.1 Tabla/tarjetas de actividades con todos los campos
+- [ ] 4.2 Modal formulario para crear/editar actividad
+- [ ] 4.3 Eliminar actividad con confirmación
+- [ ] 4.4 Checkbox de completado inline
+- [ ] 4.5 Filtros por estado y tipo
+
+### Fase 5 — Módulo Contactos
+- [ ] 5.1 Lista de contactos con nombre, cargo, emails
+- [ ] 5.2 CRUD de contactos
+- [ ] 5.3 Asociar contacto a actividad
+
+### Fase 6 — Datos y Persistencia
+- [ ] 6.1 Módulo data.js: CRUD con localStorage
+- [ ] 6.2 Datos de ejemplo precargados (planilla y quincena típicos)
+- [ ] 6.3 Exportar actividades a CSV
+
+### Fase 7 — Calidad y Pulido
+- [ ] 7.1 Alertas visuales por fechas próximas/vencidas
+- [ ] 7.2 Validaciones en formularios
+- [ ] 7.3 Prueba responsive en móvil
+
+### Fase 8 — Documentación e Informe
+- [ ] 8.1 Crear Informe.md con descripción técnica completa
+- [ ] 8.2 Commit final consolidado
+
+### Fase 9 — GitHub
+- [ ] 9.1 Push a https://github.com/mdmq2037-cloud/dashboard_mcp.git
+  > ⚠️ PENDIENTE CONFIRMACIÓN DEL USUARIO antes de ejecutar push
+
+---
+
+## Revisión
+*(Se completará al finalizar el proyecto)*
