@@ -105,37 +105,6 @@ Cada actividad tiene:
 
 ---
 
----
-
-## Fase 10 — Conexión a Supabase
-
-### Objetivo
-Migrar la capa de datos de **SQLite local** a **Supabase (PostgreSQL)** manteniendo la misma API interna que usa `app.py`.
-
-### Cambios mínimos necesarios
-
-- [ ] 10.1 Agregar `supabase` a `requirements.txt`
-- [ ] 10.2 Crear `.env` con credenciales `SUPABASE_URL` y `SUPABASE_KEY`
-- [ ] 10.3 Reescribir `database.py` para usar el cliente Supabase en lugar de SQLite
-- [ ] 10.4 Ejecutar SQL en Supabase para crear las tablas `activities`, `contacts`, `settings`
-- [ ] 10.5 Verificar que todos los endpoints de `app.py` funcionan correctamente
-- [ ] 10.6 Commit con mensaje descriptivo
-
-### Archivos que cambian
-| Archivo | Cambio |
-|---------|--------|
-| `requirements.txt` | Agregar `supabase>=2.0.0` |
-| `.env` *(nuevo)* | `SUPABASE_URL` + `SUPABASE_KEY` |
-| `database.py` | Reemplazar SQLite por cliente Supabase |
-| `app.py` | Cargar `.env` con `python-dotenv` |
-
-### Archivos que NO cambian
-- `static/js/` (frontend no se toca)
-- `index.html`
-- `templates/`
-
----
-
 ## Revisión Final
 
 **Fecha:** 2026-03-09

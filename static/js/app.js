@@ -178,7 +178,6 @@ const App = (() => {
 
   function salir() {
     window.close();
-    // Fallback si el navegador no permite cerrar la pestaña
     document.body.innerHTML = '<div style="display:flex;align-items:center;justify-content:center;height:100vh;font-family:sans-serif;color:#374151;flex-direction:column;gap:12px"><i class="fas fa-check-circle" style="font-size:3rem;color:#22c55e"></i><p style="font-size:1.2rem;font-weight:600">Sesión cerrada. Puedes cerrar esta pestaña.</p></div>';
   }
 
