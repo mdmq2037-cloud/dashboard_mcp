@@ -49,6 +49,9 @@
           <button onclick="App.navigate('contactos')"   id="nav-contactos"   class="nav-btn">
             <i class="fas fa-address-book mr-2"></i>Contactos
           </button>
+          <button onclick="App.salir()" class="nav-btn ml-2 !text-red-300 hover:!bg-red-700 hover:!text-white border border-red-500 rounded-lg">
+            <i class="fas fa-sign-out-alt mr-2"></i>Salir
+          </button>
         </div>
 
         <!-- Botón hamburguesa (móvil) -->
@@ -69,6 +72,9 @@
         </button>
         <button onclick="App.navigate('contactos')"   id="nav-m-contactos"   class="mobile-nav-btn">
           <i class="fas fa-address-book mr-3"></i>Contactos
+        </button>
+        <button onclick="App.salir()" class="mobile-nav-btn !text-red-300 border-t border-blue-600 mt-1 pt-2">
+          <i class="fas fa-sign-out-alt mr-3"></i>Salir
         </button>
       </div>
     </div>
