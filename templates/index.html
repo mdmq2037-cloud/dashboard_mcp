@@ -3,207 +3,324 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Dashboard MCP — Control Planilla & Quincena</title>
-
-  <!-- Tailwind CSS CDN -->
-  <script src="https://cdn.tailwindcss.com"></script>
-
-  <!-- Font Awesome -->
-  <link rel="stylesheet"
-    href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css"
-    crossorigin="anonymous">
-
-  <!-- Google Fonts -->
+  <title>RRHH Sistema — Dashboard</title>
   <link rel="preconnect" href="https://fonts.googleapis.com">
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
-
-  <!-- Estilos personalizados -->
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="{{ url_for('static', filename='css/app.css') }}">
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
 </head>
-<body class="bg-gray-50 min-h-screen">
+<body>
 
-  <!-- ══════════════════════════════════════════════════════
-       NAVBAR
-  ══════════════════════════════════════════════════════ -->
-  <nav class="bg-blue-700 shadow-lg sticky top-0 z-40">
-    <div class="max-w-7xl mx-auto px-4">
-      <div class="flex justify-between items-center h-16">
+  <!-- SIDEBAR -->
+  <aside class="sidebar" id="sidebar">
+    <div class="sidebar-header">
+      <div class="sidebar-logo">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
+      </div>
+      <div class="sidebar-brand">
+        <span class="brand-name">RRHH Sistema</span>
+        <span class="brand-sub">Recursos Humanos</span>
+      </div>
+      <button class="sidebar-close" id="sidebarClose">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+      </button>
+    </div>
+    <nav class="sidebar-nav">
+      <div class="nav-section-label">Principal</div>
+      <button class="nav-item active" data-module="dashboard">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/></svg>
+        <span>Dashboard</span>
+      </button>
+      <div class="nav-section-label">Gestión</div>
+      <button class="nav-item" data-module="empleados">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
+        <span>Empleados</span>
+      </button>
+      <button class="nav-item" data-module="nomina">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="2" y="5" width="20" height="14" rx="2"/><line x1="2" y1="10" x2="22" y2="10"/></svg>
+        <span>Nómina</span>
+      </button>
+      <button class="nav-item" data-module="asistencia">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/><path d="M9 16l2 2 4-4"/></svg>
+        <span>Asistencia</span>
+      </button>
+      <button class="nav-item" data-module="evaluaciones">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/></svg>
+        <span>Evaluaciones</span>
+      </button>
+      <div class="nav-section-label">Análisis</div>
+      <button class="nav-item" data-module="reportes">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="20" x2="18" y2="10"/><line x1="12" y1="20" x2="12" y2="4"/><line x1="6" y1="20" x2="6" y2="14"/></svg>
+        <span>Reportes</span>
+      </button>
+    </nav>
+    <div class="sidebar-footer">
+      <div class="user-info">
+        <div class="user-avatar">{{ username[0]|upper }}</div>
+        <div>
+          <div class="user-name">{{ username }}</div>
+          <div class="user-role">Administrador</div>
+        </div>
+      </div>
+      <a href="/logout" class="logout-btn" title="Cerrar sesión">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg>
+      </a>
+    </div>
+  </aside>
 
-        <!-- Logo -->
-        <div class="flex items-center gap-3">
-          <i class="fas fa-clipboard-check text-white text-2xl"></i>
-          <div>
-            <span class="text-white font-bold text-lg leading-none">Dashboard MCP</span>
-            <span class="hidden sm:block text-blue-200 text-xs">Control Planilla &amp; Quincena</span>
+  <div class="overlay" id="overlay"></div>
+
+  <div class="main-wrap">
+    <!-- Topbar -->
+    <header class="topbar">
+      <button class="menu-btn" id="menuBtn">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="18" x2="21" y2="18"/></svg>
+      </button>
+      <div class="topbar-title" id="pageTitle">Dashboard</div>
+      <div class="topbar-actions">
+        <div class="topbar-date" id="topbarDate"></div>
+        <div class="user-badge">{{ username[0]|upper }}</div>
+        <a href="/logout" class="logout-topbar-btn" title="Cerrar sesión">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg>
+          <span>Salir</span>
+        </a>
+      </div>
+    </header>
+
+    <main class="content">
+
+      <!-- DASHBOARD -->
+      <section class="module active" id="mod-dashboard">
+        <div class="module-header">
+          <h1>Dashboard General</h1>
+          <p>Resumen ejecutivo de Recursos Humanos</p>
+        </div>
+        <div class="kpi-grid" id="kpiGrid">
+          <div class="kpi-card loading"></div><div class="kpi-card loading"></div>
+          <div class="kpi-card loading"></div><div class="kpi-card loading"></div>
+          <div class="kpi-card loading"></div><div class="kpi-card loading"></div>
+        </div>
+        <div class="charts-grid">
+          <div class="chart-card"><div class="chart-title">Empleados por Departamento</div><div class="chart-wrap"><canvas id="chartDept"></canvas></div></div>
+          <div class="chart-card"><div class="chart-title">Distribución por Género</div><div class="chart-wrap"><canvas id="chartGenero"></canvas></div></div>
+        </div>
+        <div class="charts-grid">
+          <div class="chart-card"><div class="chart-title">Distribución por Rango de Edad</div><div class="chart-wrap"><canvas id="chartEdades"></canvas></div></div>
+          <div class="chart-card"><div class="chart-title">Nivel de Satisfacción</div><div class="chart-wrap"><canvas id="chartSatisfaccion"></canvas></div></div>
+        </div>
+      </section>
+
+      <!-- EMPLEADOS -->
+      <section class="module" id="mod-empleados">
+        <div class="module-header"><h1>Gestión de Empleados</h1><p>Registro y administración del personal</p></div>
+        <div class="toolbar">
+          <div class="search-box">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+            <input type="text" id="empSearch" placeholder="Buscar empleado...">
+          </div>
+          <select id="empDeptFilter" class="filter-select"><option value="">Todos los departamentos</option></select>
+          <select id="empEstadoFilter" class="filter-select">
+            <option value="">Todos los estados</option>
+            <option value="Activo">Activo</option>
+            <option value="Inactivo">Inactivo</option>
+          </select>
+          <button class="btn-primary" id="btnNuevoEmp">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+            Nuevo
+          </button>
+        </div>
+        <div class="table-wrap">
+          <table class="data-table">
+            <thead><tr><th>ID</th><th>Nombre</th><th>Departamento</th><th>Cargo</th><th>Salario</th><th>Estado</th><th>Acciones</th></tr></thead>
+            <tbody id="empTableBody"></tbody>
+          </table>
+        </div>
+        <div class="mobile-cards" id="empMobileCards"></div>
+      </section>
+
+      <!-- NÓMINA -->
+      <section class="module" id="mod-nomina">
+        <div class="module-header"><h1>Nómina y Planilla</h1><p>Cálculo de salarios, deducciones y beneficios — Ley CR</p></div>
+        <div class="toolbar">
+          <select id="nominaPeriodo" class="filter-select"><option value="">Período actual</option></select>
+          <button class="btn-primary" id="btnVerPlanilla">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>
+            Ver Planilla
+          </button>
+          <button class="btn-outline" id="btnCalcIndividual">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="4" y="2" width="16" height="20" rx="2"/><line x1="8" y1="6" x2="16" y2="6"/><line x1="8" y1="10" x2="16" y2="10"/><line x1="8" y1="14" x2="12" y2="14"/></svg>
+            Calcular Individual
+          </button>
+        </div>
+        <div class="nomina-resumen" id="nominaResumen">
+          <div class="kpi-card loading"></div><div class="kpi-card loading"></div>
+          <div class="kpi-card loading"></div><div class="kpi-card loading"></div>
+        </div>
+        <div class="table-wrap">
+          <table class="data-table">
+            <thead><tr><th>Empleado</th><th>Dpto.</th><th>S. Bruto</th><th>CCSS</th><th>Renta</th><th>B. Pop.</th><th>Total Ded.</th><th>S. Neto</th></tr></thead>
+            <tbody id="nominaTableBody"></tbody>
+          </table>
+        </div>
+        <div class="chart-card" style="margin-top:24px">
+          <div class="chart-title">Costo de Planilla por Departamento</div>
+          <div class="chart-wrap"><canvas id="chartNominaDepto"></canvas></div>
+        </div>
+      </section>
+
+      <!-- ASISTENCIA -->
+      <section class="module" id="mod-asistencia">
+        <div class="module-header"><h1>Control de Asistencia</h1><p>Registro y seguimiento de asistencia del personal</p></div>
+        <div class="toolbar">
+          <input type="month" id="asiMes" class="filter-select">
+          <select id="asiDept" class="filter-select"><option value="">Todos los departamentos</option></select>
+          <button class="btn-primary" id="btnNuevaAsistencia">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+            Registrar
+          </button>
+        </div>
+        <div class="charts-grid">
+          <div class="chart-card"><div class="chart-title">Estado de Asistencia</div><div class="chart-wrap"><canvas id="chartAsiEstado"></canvas></div></div>
+          <div class="chart-card"><div class="chart-title">Ausencias por Departamento</div><div class="chart-wrap"><canvas id="chartAsiDepto"></canvas></div></div>
+        </div>
+        <div class="table-wrap">
+          <table class="data-table">
+            <thead><tr><th>Empleado</th><th>Departamento</th><th>Fecha</th><th>Estado</th><th>Entrada</th><th>Salida</th></tr></thead>
+            <tbody id="asiTableBody"></tbody>
+          </table>
+        </div>
+      </section>
+
+      <!-- EVALUACIONES -->
+      <section class="module" id="mod-evaluaciones">
+        <div class="module-header"><h1>Evaluaciones de Desempeño</h1><p>Seguimiento del rendimiento y metas del personal</p></div>
+        <div class="toolbar">
+          <select id="evalDept" class="filter-select"><option value="">Todos los departamentos</option></select>
+          <button class="btn-primary" id="btnNuevaEval">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+            Nueva Evaluación
+          </button>
+        </div>
+        <div class="section-title">Top Desempeño</div>
+        <div class="performers-grid" id="topPerformers"></div>
+        <div class="table-wrap" style="margin-top:24px">
+          <table class="data-table">
+            <thead><tr><th>Empleado</th><th>Departamento</th><th>Período</th><th>Puntaje</th><th>Metas</th><th>Evaluador</th></tr></thead>
+            <tbody id="evalTableBody"></tbody>
+          </table>
+        </div>
+      </section>
+
+      <!-- REPORTES -->
+      <section class="module" id="mod-reportes">
+        <div class="module-header"><h1>Reportes y Análisis</h1><p>Indicadores estratégicos de Recursos Humanos</p></div>
+        <div class="reportes-tabs">
+          <button class="tab-btn active" data-tab="rotacion">Rotación</button>
+          <button class="tab-btn" data-tab="planilla">Costo Planilla</button>
+          <button class="tab-btn" data-tab="ausentismo">Ausentismo</button>
+        </div>
+        <div class="tab-content active" id="tab-rotacion">
+          <div class="kpi-grid-sm" id="rotacionKpis"></div>
+          <div class="chart-card" style="margin-top:24px">
+            <div class="chart-title">Bajas por Departamento</div>
+            <div class="chart-wrap"><canvas id="chartRotacion"></canvas></div>
           </div>
         </div>
-
-        <!-- Menú escritorio -->
-        <div class="hidden md:flex items-center gap-1">
-          <button onclick="App.navigate('dashboard')"   id="nav-dashboard"   class="nav-btn active">
-            <i class="fas fa-tachometer-alt mr-2"></i>Dashboard
-          </button>
-          <button onclick="App.navigate('actividades')" id="nav-actividades" class="nav-btn">
-            <i class="fas fa-tasks mr-2"></i>Actividades
-          </button>
-          <button onclick="App.navigate('contactos')"   id="nav-contactos"   class="nav-btn">
-            <i class="fas fa-address-book mr-2"></i>Contactos
-          </button>
+        <div class="tab-content" id="tab-planilla">
+          <div class="chart-card">
+            <div class="chart-title">Evolución del Costo de Planilla (últimos 6 meses)</div>
+            <div class="chart-wrap"><canvas id="chartPlanilla"></canvas></div>
+          </div>
         </div>
-
-        <!-- Botón hamburguesa (móvil) -->
-        <button id="menu-toggle" onclick="App.toggleMenu()"
-          class="md:hidden text-white p-2 rounded-lg hover:bg-blue-600 transition-colors"
-          aria-label="Menú">
-          <i class="fas fa-bars text-xl"></i>
-        </button>
-      </div>
-
-      <!-- Menú móvil desplegable -->
-      <div id="mobile-menu" class="hidden md:hidden pb-3 border-t border-blue-600 mt-1 pt-2">
-        <button onclick="App.navigate('dashboard')"   id="nav-m-dashboard"   class="mobile-nav-btn active">
-          <i class="fas fa-tachometer-alt mr-3"></i>Dashboard
-        </button>
-        <button onclick="App.navigate('actividades')" id="nav-m-actividades" class="mobile-nav-btn">
-          <i class="fas fa-tasks mr-3"></i>Actividades
-        </button>
-        <button onclick="App.navigate('contactos')"   id="nav-m-contactos"   class="mobile-nav-btn">
-          <i class="fas fa-address-book mr-3"></i>Contactos
-        </button>
-      </div>
-    </div>
-  </nav>
-
-  <!-- ══════════════════════════════════════════════════════
-       CONTENIDO PRINCIPAL
-  ══════════════════════════════════════════════════════ -->
-  <main class="max-w-7xl mx-auto px-4 py-6">
-
-    <!-- ╔═══════════════════════╗
-         ║  VISTA DASHBOARD      ║
-         ╚═══════════════════════╝ -->
-    <div id="view-dashboard" class="view">
-
-      <!-- Encabezado -->
-      <div class="mb-6">
-        <h2 class="text-2xl font-bold text-gray-800">Dashboard</h2>
-        <p class="text-sm text-gray-500 mt-0.5">Resumen general de actividades de planilla y quincena</p>
-      </div>
-
-      <!-- Tarjetas estadísticas -->
-      <div class="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6" id="dashboard-cards">
-        <!-- Se renderizan desde JS -->
-      </div>
-
-      <!-- Próximas fechas + Alertas -->
-      <div class="grid md:grid-cols-2 gap-6">
-
-        <div class="bg-white rounded-xl shadow p-5">
-          <h3 class="font-bold text-gray-700 mb-4 flex items-center gap-2">
-            <i class="fas fa-calendar-alt text-blue-500"></i>
-            Próximas Fechas de Entrega
-            <span class="text-xs text-gray-400 font-normal ml-auto">próximos 14 días</span>
-          </h3>
-          <div id="upcoming-list"></div>
+        <div class="tab-content" id="tab-ausentismo">
+          <div class="chart-card">
+            <div class="chart-title">Tasa de Ausentismo por Departamento</div>
+            <div class="chart-wrap"><canvas id="chartAusentismo"></canvas></div>
+          </div>
+          <div class="table-wrap" style="margin-top:24px">
+            <table class="data-table">
+              <thead><tr><th>Departamento</th><th>Empleados</th><th>Tasa Promedio (%)</th><th>Nivel</th></tr></thead>
+              <tbody id="ausentismoTable"></tbody>
+            </table>
+          </div>
         </div>
+      </section>
 
-        <div class="bg-white rounded-xl shadow p-5">
-          <h3 class="font-bold text-gray-700 mb-4 flex items-center gap-2">
-            <i class="fas fa-exclamation-triangle text-yellow-500"></i>
-            Alertas de Fechas
-          </h3>
-          <div id="alerts-list"></div>
-        </div>
+    </main>
+  </div>
 
+  <!-- MODAL EMPLEADO -->
+  <div class="modal-backdrop" id="modalEmp">
+    <div class="modal">
+      <div class="modal-header">
+        <h3 id="modalEmpTitle">Nuevo Empleado</h3>
+        <button class="modal-close" data-modal="modalEmp"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg></button>
       </div>
-    </div>
-
-    <!-- ╔═══════════════════════╗
-         ║  VISTA ACTIVIDADES    ║
-         ╚═══════════════════════╝ -->
-    <div id="view-actividades" class="view hidden">
-
-      <!-- Cabecera + controles -->
-      <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3 mb-5">
-        <div>
-          <h2 class="text-2xl font-bold text-gray-800">Actividades</h2>
-          <p class="text-sm text-gray-500 mt-0.5">Checklist de tareas de planilla y quincena</p>
-        </div>
-        <div class="flex flex-wrap gap-2 w-full sm:w-auto">
-          <select id="filter-tipo" onchange="UI.renderActividades()" class="filter-select">
-            <option value="">Todos los tipos</option>
-            <option value="planilla">Planilla</option>
-            <option value="quincena1">1ra Quincena</option>
-            <option value="quincena2">2da Quincena</option>
-          </select>
-          <select id="filter-estado" onchange="UI.renderActividades()" class="filter-select">
-            <option value="">Todos los estados</option>
-            <option value="pendiente">Pendiente</option>
-            <option value="en_proceso">En Proceso</option>
-            <option value="completado">Completado</option>
-          </select>
-          <button onclick="App.openModal('actividad')" class="btn-primary">
-            <i class="fas fa-plus mr-2"></i>Nueva
-          </button>
-          <button onclick="App.exportCSV()" class="btn-secondary" title="Exportar a CSV">
-            <i class="fas fa-file-csv mr-1"></i>
-            <span class="hidden sm:inline">Exportar</span>
-          </button>
-        </div>
+      <div class="modal-body">
+        <form id="formEmp" class="form-grid">
+          <input type="hidden" id="empId">
+          <div class="form-group"><label>Nombre completo *</label><input type="text" id="empNombre" placeholder="Apellido, Nombre" required></div>
+          <div class="form-group"><label>Género</label><select id="empGenero"><option>Masculino</option><option>Femenino</option></select></div>
+          <div class="form-group"><label>Edad</label><input type="number" id="empEdad" min="18" max="70" value="25"></div>
+          <div class="form-group"><label>Departamento *</label><select id="empDept"></select></div>
+          <div class="form-group"><label>Cargo *</label><input type="text" id="empCargo" placeholder="Ej: Analista"></div>
+          <div class="form-group"><label>Supervisor</label><input type="text" id="empSupervisor"></div>
+          <div class="form-group"><label>Salario Bruto (₡) *</label><input type="number" id="empSalario" min="0" step="1000" value="600000"></div>
+          <div class="form-group"><label>Fecha de Inicio</label><input type="date" id="empFechaInicio"></div>
+          <div class="form-group"><label>Email</label><input type="email" id="empEmail"></div>
+          <div class="form-group"><label>Teléfono</label><input type="text" id="empTelefono"></div>
+          <div class="form-group"><label>Estado</label><select id="empEstado"><option>Activo</option><option>Inactivo</option></select></div>
+        </form>
       </div>
-
-      <!-- Contenedor (tabla escritorio / tarjetas móvil) -->
-      <div id="actividades-container"></div>
-    </div>
-
-    <!-- ╔═══════════════════════╗
-         ║  VISTA CONTACTOS      ║
-         ╚═══════════════════════╝ -->
-    <div id="view-contactos" class="view hidden">
-
-      <div class="flex justify-between items-center mb-5">
-        <div>
-          <h2 class="text-2xl font-bold text-gray-800">Contactos</h2>
-          <p class="text-sm text-gray-500 mt-0.5">Personas y correos de envío de información</p>
-        </div>
-        <button onclick="App.openModal('contacto')" class="btn-primary">
-          <i class="fas fa-user-plus mr-2"></i>Nuevo Contacto
-        </button>
+      <div class="modal-footer">
+        <button class="btn-outline" data-modal="modalEmp">Cancelar</button>
+        <button class="btn-primary" id="btnSaveEmp">Guardar</button>
       </div>
-
-      <div id="contactos-container" class="grid sm:grid-cols-2 lg:grid-cols-3 gap-4"></div>
-    </div>
-
-  </main>
-
-  <!-- ══════════════════════════════════════════════════════
-       MODAL
-  ══════════════════════════════════════════════════════ -->
-  <div id="modal" class="hidden" onclick="App.closeModalOutside(event)">
-    <div class="bg-white rounded-xl shadow-2xl w-full max-w-2xl max-h-[92vh] overflow-y-auto">
-      <div class="flex justify-between items-center px-6 py-4 border-b">
-        <h3 id="modal-title" class="text-lg font-bold text-gray-800"></h3>
-        <button onclick="App.closeModal()"
-          class="text-gray-400 hover:text-gray-600 transition-colors p-1 rounded-lg hover:bg-gray-100"
-          aria-label="Cerrar">
-          <i class="fas fa-times text-lg"></i>
-        </button>
-      </div>
-      <div id="modal-body" class="px-6 py-5"></div>
     </div>
   </div>
 
-  <!-- ══════════════════════════════════════════════════════
-       TOAST
-  ══════════════════════════════════════════════════════ -->
-  <div id="toast" class="toast" role="status" aria-live="polite"></div>
+  <!-- MODAL CÁLCULO INDIVIDUAL -->
+  <div class="modal-backdrop" id="modalCalcNomina">
+    <div class="modal modal-sm">
+      <div class="modal-header">
+        <h3>Calcular Nómina Individual</h3>
+        <button class="modal-close" data-modal="modalCalcNomina"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg></button>
+      </div>
+      <div class="modal-body">
+        <div class="form-group"><label>ID Empleado</label><input type="text" id="calcEmpId" placeholder="EMP0001"></div>
+        <div id="calcResult"></div>
+      </div>
+      <div class="modal-footer">
+        <button class="btn-outline" data-modal="modalCalcNomina">Cerrar</button>
+        <button class="btn-primary" id="btnDoCalc">Calcular</button>
+      </div>
+    </div>
+  </div>
 
-  <!-- ══════════════════════════════════════════════════════
-       SCRIPTS (orden importante)
-  ══════════════════════════════════════════════════════ -->
-  <script src="{{ url_for('static', filename='js/data.js') }}"></script>
-  <script src="{{ url_for('static', filename='js/ui.js') }}"></script>
+  <!-- MODAL EVALUACIÓN -->
+  <div class="modal-backdrop" id="modalEval">
+    <div class="modal modal-sm">
+      <div class="modal-header">
+        <h3>Nueva Evaluación</h3>
+        <button class="modal-close" data-modal="modalEval"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg></button>
+      </div>
+      <div class="modal-body">
+        <form id="formEval" class="form-grid">
+          <div class="form-group"><label>ID Empleado *</label><input type="text" id="evalEmpId" placeholder="EMP0001"></div>
+          <div class="form-group"><label>Período *</label><input type="text" id="evalPeriodo" placeholder="2025-Q1"></div>
+          <div class="form-group"><label>Puntaje (0-100)</label><input type="number" id="evalPuntaje" min="0" max="100" value="80"></div>
+          <div class="form-group"><label>Metas Cumplidas</label><input type="number" id="evalMetas" min="0" max="10" value="4"></div>
+          <div class="form-group form-full"><label>Comentarios</label><textarea id="evalComentarios" rows="3"></textarea></div>
+        </form>
+      </div>
+      <div class="modal-footer">
+        <button class="btn-outline" data-modal="modalEval">Cancelar</button>
+        <button class="btn-primary" id="btnSaveEval">Guardar</button>
+      </div>
+    </div>
+  </div>
+
+  <div class="toast-container" id="toastContainer"></div>
   <script src="{{ url_for('static', filename='js/app.js') }}"></script>
-
 </body>
 </html>
