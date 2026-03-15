@@ -108,9 +108,8 @@ const GanttUI = (() => {
                   'Julio','Agosto','Septiembre','Octubre','Noviembre','Diciembre'];
 
   const TIPOS_PANEL = [
-    { key: 'quincena1', label: '1RA QUINCENA',      icon: 'fa-calendar-check',      color: 'blue'    },
-    { key: 'quincena2', label: '2DA QUINCENA',      icon: 'fa-calendar-alt',        color: 'violet'  },
-    { key: 'planilla',  label: 'PLANILLA FIN MES',  icon: 'fa-file-invoice-dollar', color: 'emerald' }
+    { key: 'quincena', label: 'QUINCENA',    icon: 'fa-calendar-check',      color: 'blue'    },
+    { key: 'planilla', label: 'FIN DE MES',  icon: 'fa-file-invoice-dollar', color: 'emerald' }
   ];
 
   const VAL_CFG = {
@@ -266,7 +265,11 @@ const GanttUI = (() => {
 
   // ── Columna por tipo de pago ─────────────────────────────────────────────────
   function _renderColumn(tipo, activities) {
-    const acts = activities.filter(a => a.tipo === tipo.key);
+    const acts = activities.filter(a =>
+      tipo.key === 'quincena'
+        ? (a.tipo === 'quincena' || a.tipo === 'quincena1' || a.tipo === 'quincena2')
+        : a.tipo === tipo.key
+    );
     const c    = COL_COLORS[tipo.color];
 
     // Stats de la columna

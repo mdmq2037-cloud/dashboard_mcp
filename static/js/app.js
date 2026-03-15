@@ -163,7 +163,7 @@ const App = (() => {
       'F. Análisis', 'F. Envío', 'Estado',
       'Contacto', 'Correos', 'Observaciones'
     ];
-    const TIPOS   = { planilla: 'Planilla', quincena1: '1ra Quincena', quincena2: '2da Quincena' };
+    const TIPOS   = { quincena: 'Quincena', planilla: 'Fin de Mes', quincena1: 'Quincena', quincena2: 'Quincena' };
     const ESTADOS = { pendiente: 'Pendiente', en_proceso: 'En Proceso', completado: 'Completado' };
 
     const rows = DB.getActivities().map(a => {

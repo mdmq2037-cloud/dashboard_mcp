@@ -43,9 +43,11 @@ const UI = (() => {
 
   // ── Badges tipo / estado ─────────────────────────────────────────────────
   const TIPO = {
-    planilla:  { label: 'Planilla',       cls: 'badge-planilla' },
-    quincena1: { label: '1ra Quincena',   cls: 'badge-quincena1' },
-    quincena2: { label: '2da Quincena',   cls: 'badge-quincena2' }
+    quincena:  { label: 'Quincena',   cls: 'badge-quincena1' },
+    planilla:  { label: 'Fin de Mes', cls: 'badge-planilla'  },
+    // backward compat
+    quincena1: { label: 'Quincena',   cls: 'badge-quincena1' },
+    quincena2: { label: 'Quincena',   cls: 'badge-quincena2' }
   };
   const ESTADO = {
     pendiente: { label: 'Pendiente',  cls: 'badge-pendiente' },
@@ -340,9 +342,8 @@ const UI = (() => {
             <label class="form-label">Tipo *</label>
             <select id="f-tipo" required class="form-input">
               <option value="">Seleccionar...</option>
-              <option value="planilla"   ${v.tipo === 'planilla'   ? 'selected' : ''}>Planilla</option>
-              <option value="quincena1"  ${v.tipo === 'quincena1'  ? 'selected' : ''}>1ra Quincena</option>
-              <option value="quincena2"  ${v.tipo === 'quincena2'  ? 'selected' : ''}>2da Quincena</option>
+              <option value="quincena" ${(v.tipo === 'quincena' || v.tipo === 'quincena1' || v.tipo === 'quincena2') ? 'selected' : ''}>Quincena</option>
+              <option value="planilla" ${v.tipo === 'planilla' ? 'selected' : ''}>Fin de Mes</option>
             </select>
           </div>
           <div>
