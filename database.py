@@ -84,16 +84,19 @@ class Database:
         return {**data, 'id': aid, 'createdAt': now}
 
     def update_activity(self, aid: str, data: dict) -> dict | None:
-        row = {
-            'nombre':         data.get('nombre'),
-            'tipo':           data.get('tipo'),
-            'fecha_entrega':  data.get('fechaEntrega'),
-            'fecha_analisis': data.get('fechaAnalisis'),
-            'fecha_envio':    data.get('fechaEnvio'),
-            'estado':         data.get('estado'),
-            'contacto_id':    data.get('contactoId'),
-            'observaciones':  data.get('observaciones'),
+        _map = {
+            'nombre':        'nombre',
+            'tipo':          'tipo',
+            'fechaEntrega':  'fecha_entrega',
+            'fechaAnalisis': 'fecha_analisis',
+            'fechaEnvio':    'fecha_envio',
+            'estado':        'estado',
+            'contactoId':    'contacto_id',
+            'observaciones': 'observaciones',
         }
+        row = {db_col: data[js_key] for js_key, db_col in _map.items() if js_key in data}
+        if not row:
+            return None
         res = self.client.table('activities').update(row).eq('id', aid).execute()
         return self._to_activity(res.data[0]) if res.data else None
 
@@ -117,11 +120,15 @@ class Database:
         return {**data, 'id': cid}
 
     def update_contact(self, cid: str, data: dict) -> dict | None:
-        row = {
-            'nombre': data.get('nombre'),
-            'cargo':  data.get('cargo'),
-            'emails': json.dumps(data.get('emails', [])),
-        }
+        row = {}
+        if 'nombre' in data:
+            row['nombre'] = data['nombre']
+        if 'cargo' in data:
+            row['cargo'] = data['cargo']
+        if 'emails' in data:
+            row['emails'] = json.dumps(data['emails'])
+        if not row:
+            return None
         res = self.client.table('contacts').update(row).eq('id', cid).execute()
         return self._to_contact(res.data[0]) if res.data else None
 
