@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Dashboard MCP — Control Planilla & Quincena</title>
+  <title>Dashboard MCP — Control Planilla &amp; Quincena</title>
 
   <!-- Tailwind CSS CDN -->
   <script src="https://cdn.tailwindcss.com"></script>
@@ -30,7 +30,7 @@
       <div class="flex justify-between items-center h-16">
 
         <!-- Logo -->
-        <div class="flex items-center gap-3">
+        <div class="flex items-center gap-3 flex-shrink-0">
           <i class="fas fa-clipboard-check text-white text-2xl"></i>
           <div>
             <span class="text-white font-bold text-lg leading-none">Dashboard MCP</span>
@@ -40,13 +40,16 @@
 
         <!-- Menú escritorio -->
         <div class="hidden md:flex items-center gap-1">
-          <button onclick="App.navigate('dashboard')"   id="nav-dashboard"   class="nav-btn active">
-            <i class="fas fa-tachometer-alt mr-2"></i>Dashboard
+          <button onclick="App.navigate('panel')"        id="nav-panel"        class="nav-btn active">
+            <i class="fas fa-th-large mr-2"></i>Panel
           </button>
-          <button onclick="App.navigate('actividades')" id="nav-actividades" class="nav-btn">
+          <button onclick="App.navigate('indicadores')"  id="nav-indicadores"  class="nav-btn">
+            <i class="fas fa-chart-bar mr-2"></i>Indicadores
+          </button>
+          <button onclick="App.navigate('actividades')"  id="nav-actividades"  class="nav-btn">
             <i class="fas fa-tasks mr-2"></i>Actividades
           </button>
-          <button onclick="App.navigate('contactos')"   id="nav-contactos"   class="nav-btn">
+          <button onclick="App.navigate('contactos')"    id="nav-contactos"    class="nav-btn">
             <i class="fas fa-address-book mr-2"></i>Contactos
           </button>
         </div>
@@ -61,8 +64,11 @@
 
       <!-- Menú móvil desplegable -->
       <div id="mobile-menu" class="hidden md:hidden pb-3 border-t border-blue-600 mt-1 pt-2">
-        <button onclick="App.navigate('dashboard')"   id="nav-m-dashboard"   class="mobile-nav-btn active">
-          <i class="fas fa-tachometer-alt mr-3"></i>Dashboard
+        <button onclick="App.navigate('panel')"       id="nav-m-panel"       class="mobile-nav-btn active">
+          <i class="fas fa-th-large mr-3"></i>Panel
+        </button>
+        <button onclick="App.navigate('indicadores')" id="nav-m-indicadores" class="mobile-nav-btn">
+          <i class="fas fa-chart-bar mr-3"></i>Indicadores
         </button>
         <button onclick="App.navigate('actividades')" id="nav-m-actividades" class="mobile-nav-btn">
           <i class="fas fa-tasks mr-3"></i>Actividades
@@ -77,50 +83,37 @@
   <!-- ══════════════════════════════════════════════════════
        CONTENIDO PRINCIPAL
   ══════════════════════════════════════════════════════ -->
-  <main class="max-w-7xl mx-auto px-4 py-6">
+  <main class="max-w-7xl mx-auto px-4 py-5">
 
-    <!-- ╔═══════════════════════╗
-         ║  VISTA DASHBOARD      ║
-         ╚═══════════════════════╝ -->
-    <div id="view-dashboard" class="view">
-
-      <!-- Encabezado -->
-      <div class="mb-6">
-        <h2 class="text-2xl font-bold text-gray-800">Dashboard</h2>
-        <p class="text-sm text-gray-500 mt-0.5">Resumen general de actividades de planilla y quincena</p>
+    <!-- ╔═══════════════════════════════╗
+         ║  VISTA PANEL (Gantt)          ║
+         ╚═══════════════════════════════╝ -->
+    <div id="view-panel" class="view">
+      <div class="mb-5">
+        <h2 class="text-2xl font-bold text-gray-800">Panel de Control</h2>
+        <p class="text-sm text-gray-500 mt-0.5">Seguimiento de pagos: quincena y planilla mensual</p>
       </div>
-
-      <!-- Tarjetas estadísticas -->
-      <div class="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6" id="dashboard-cards">
-        <!-- Se renderizan desde JS -->
-      </div>
-
-      <!-- Próximas fechas + Alertas -->
-      <div class="grid md:grid-cols-2 gap-6">
-
-        <div class="bg-white rounded-xl shadow p-5">
-          <h3 class="font-bold text-gray-700 mb-4 flex items-center gap-2">
-            <i class="fas fa-calendar-alt text-blue-500"></i>
-            Próximas Fechas de Entrega
-            <span class="text-xs text-gray-400 font-normal ml-auto">próximos 14 días</span>
-          </h3>
-          <div id="upcoming-list"></div>
-        </div>
-
-        <div class="bg-white rounded-xl shadow p-5">
-          <h3 class="font-bold text-gray-700 mb-4 flex items-center gap-2">
-            <i class="fas fa-exclamation-triangle text-yellow-500"></i>
-            Alertas de Fechas
-          </h3>
-          <div id="alerts-list"></div>
-        </div>
-
+      <div id="panel-content">
+        <!-- Renderizado por GanttUI.renderPanel() -->
       </div>
     </div>
 
-    <!-- ╔═══════════════════════╗
-         ║  VISTA ACTIVIDADES    ║
-         ╚═══════════════════════╝ -->
+    <!-- ╔═══════════════════════════════╗
+         ║  VISTA INDICADORES            ║
+         ╚═══════════════════════════════╝ -->
+    <div id="view-indicadores" class="view hidden">
+      <div class="mb-5">
+        <h2 class="text-2xl font-bold text-gray-800">Indicadores</h2>
+        <p class="text-sm text-gray-500 mt-0.5">Comparativo mensual de demoras, reprocesos y cumplimiento</p>
+      </div>
+      <div id="indicadores-content">
+        <!-- Renderizado por GanttUI.renderIndicadores() -->
+      </div>
+    </div>
+
+    <!-- ╔═══════════════════════════════╗
+         ║  VISTA ACTIVIDADES            ║
+         ╚═══════════════════════════════╝ -->
     <div id="view-actividades" class="view hidden">
 
       <!-- Cabecera + controles -->
@@ -156,15 +149,15 @@
       <div id="actividades-container"></div>
     </div>
 
-    <!-- ╔═══════════════════════╗
-         ║  VISTA CONTACTOS      ║
-         ╚═══════════════════════╝ -->
+    <!-- ╔═══════════════════════════════╗
+         ║  VISTA CONTACTOS              ║
+         ╚═══════════════════════════════╝ -->
     <div id="view-contactos" class="view hidden">
 
       <div class="flex justify-between items-center mb-5">
         <div>
           <h2 class="text-2xl font-bold text-gray-800">Contactos</h2>
-          <p class="text-sm text-gray-500 mt-0.5">Personas y correos de envío de información</p>
+          <p class="text-sm text-gray-500 mt-0.5">Jefaturas, gerencias y directores para aprobación de pagos</p>
         </div>
         <button onclick="App.openModal('contacto')" class="btn-primary">
           <i class="fas fa-user-plus mr-2"></i>Nuevo Contacto
@@ -203,6 +196,7 @@
   ══════════════════════════════════════════════════════ -->
   <script src="{{ url_for('static', filename='js/data.js') }}"></script>
   <script src="{{ url_for('static', filename='js/ui.js') }}"></script>
+  <script src="{{ url_for('static', filename='js/gantt.js') }}"></script>
   <script src="{{ url_for('static', filename='js/app.js') }}"></script>
 
 </body>

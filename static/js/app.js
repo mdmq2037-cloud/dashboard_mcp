@@ -1,7 +1,7 @@
 'use strict';
 
 const App = (() => {
-  let _currentView = 'dashboard';
+  let _currentView = 'panel';
 
   // ── Navegación ────────────────────────────────────────────────────────────
   function navigate(view) {
@@ -10,16 +10,17 @@ const App = (() => {
     document.querySelectorAll('.view').forEach(v => v.classList.add('hidden'));
     document.getElementById(`view-${view}`).classList.remove('hidden');
 
-    ['dashboard', 'actividades', 'contactos'].forEach(v => {
+    ['panel','indicadores','actividades','contactos'].forEach(v => {
       document.getElementById(`nav-${v}`)?.classList.toggle('active', v === view);
       document.getElementById(`nav-m-${v}`)?.classList.toggle('active', v === view);
     });
 
     document.getElementById('mobile-menu').classList.add('hidden');
 
-    if (view === 'dashboard')        UI.renderDashboard();
-    else if (view === 'actividades') UI.renderActividades();
-    else if (view === 'contactos')   UI.renderContactos();
+    if      (view === 'panel')        GanttUI.renderPanel();
+    else if (view === 'indicadores')  GanttUI.renderIndicadores();
+    else if (view === 'actividades')  UI.renderActividades();
+    else if (view === 'contactos')    UI.renderContactos();
   }
 
   function toggleMenu() {
@@ -29,17 +30,23 @@ const App = (() => {
   // ── Modal ─────────────────────────────────────────────────────────────────
   function openModal(type, data = null) {
     document.getElementById('modal-title').textContent =
-      type === 'actividad'
-        ? (data ? 'Editar Actividad'  : 'Nueva Actividad')
-        : (data ? 'Editar Contacto'   : 'Nuevo Contacto');
+      type === 'actividad' ? (data ? 'Editar Actividad'  : 'Nueva Actividad')
+    : type === 'contacto'  ? (data ? 'Editar Contacto'   : 'Nuevo Contacto')
+    : type === 'gantt'     ? 'Configurar Panel — Subactividades y Aprobadores'
+    : '';
 
     document.getElementById('modal-body').innerHTML =
-      type === 'actividad'
-        ? UI.getActividadFormHTML(data)
-        : UI.getContactoFormHTML(data);
+      type === 'actividad' ? UI.getActividadFormHTML(data)
+    : type === 'contacto'  ? UI.getContactoFormHTML(data)
+    : type === 'gantt'     ? GanttUI.getGanttExtFormHTML(data)
+    : '';
 
     document.getElementById('modal').classList.remove('hidden');
     document.body.style.overflow = 'hidden';
+  }
+
+  function openGanttModal(actId) {
+    openModal('gantt', actId);
   }
 
   function closeModal() {
@@ -60,8 +67,7 @@ const App = (() => {
   async function deleteActividad(id) {
     if (!confirm('¿Eliminar esta actividad?')) return;
     await DB.deleteActivity(id);
-    UI.renderActividades();
-    UI.renderDashboard();
+    _refreshCurrentView();
     showToast('Actividad eliminada', 'error');
   }
 
@@ -79,16 +85,48 @@ const App = (() => {
       observaciones: document.getElementById('f-observaciones').value.trim()
     };
     if (id) { await DB.updateActivity(id, data); showToast('Actividad actualizada', 'success'); }
-    else    { await DB.addActivity(data);         showToast('Actividad creada',       'success'); }
+    else    { await DB.addActivity(data);         showToast('Actividad creada', 'success'); }
     closeModal();
-    UI.renderActividades();
-    UI.renderDashboard();
+    _refreshCurrentView();
   }
 
   async function toggleCompletado(id, checked) {
     await DB.updateActivity(id, { estado: checked ? 'completado' : 'pendiente' });
     UI.renderActividades();
-    UI.renderDashboard();
+  }
+
+  // ── Gantt: acciones inline ────────────────────────────────────────────────
+  function toggleGanttSubact(actId, subId) {
+    GanttData.toggleSubact(actId, subId);
+    GanttUI.renderPanel();
+  }
+
+  function toggleAprobacion(actId, nivel) {
+    GanttData.toggleAprobacion(actId, nivel);
+    GanttUI.renderPanel();
+  }
+
+  function incReproceso(actId) {
+    GanttData.incReproceso(actId);
+    GanttUI.renderPanel();
+    showToast('Reproceso registrado', 'info');
+  }
+
+  function submitGanttExt(e) {
+    e.preventDefault();
+    const actId = document.getElementById('gf-actid').value;
+    GanttData.setExt(actId, {
+      enviadoPor:         document.getElementById('gf-enviadoPor').value.trim(),
+      demora:             parseInt(document.getElementById('gf-demora').value, 10) || 0,
+      reprocesos:         parseInt(document.getElementById('gf-reprocesos').value, 10) || 0,
+      validacion:         document.getElementById('gf-validacion').value,
+      aprobadorJefatura:  document.getElementById('gf-jefatura').value,
+      aprobadorGerencia:  document.getElementById('gf-gerencia').value,
+      aprobadorDireccion: document.getElementById('gf-direccion').value
+    });
+    closeModal();
+    GanttUI.renderPanel();
+    showToast('Configuración guardada', 'success');
   }
 
   // ── Contactos ─────────────────────────────────────────────────────────────
@@ -113,7 +151,7 @@ const App = (() => {
       emails: UI.getEmailsFromForm()
     };
     if (id) { await DB.updateContact(id, data); showToast('Contacto actualizado', 'success'); }
-    else    { await DB.addContact(data);         showToast('Contacto creado',       'success'); }
+    else    { await DB.addContact(data);         showToast('Contacto creado', 'success'); }
     closeModal();
     UI.renderContactos();
   }
@@ -154,6 +192,13 @@ const App = (() => {
     showToast('CSV exportado correctamente', 'success');
   }
 
+  // ── Helpers ───────────────────────────────────────────────────────────────
+  function _refreshCurrentView() {
+    if      (_currentView === 'panel')       GanttUI.renderPanel();
+    else if (_currentView === 'indicadores') GanttUI.renderIndicadores();
+    else if (_currentView === 'actividades') UI.renderActividades();
+  }
+
   // ── Toast ─────────────────────────────────────────────────────────────────
   let _toastTimer = null;
   function showToast(msg, type = 'success') {
@@ -172,15 +217,16 @@ const App = (() => {
     } catch (err) {
       console.error('Error cargando datos:', err);
     }
-    navigate('dashboard');
+    navigate('panel');
     document.addEventListener('keydown', e => { if (e.key === 'Escape') closeModal(); });
   }
 
   return {
     navigate, toggleMenu,
-    openModal, closeModal, closeModalOutside,
+    openModal, openGanttModal, closeModal, closeModalOutside,
     editActividad, deleteActividad, submitActividad, toggleCompletado,
-    editContacto,  deleteContacto,  submitContacto,
+    toggleGanttSubact, toggleAprobacion, incReproceso, submitGanttExt,
+    editContacto, deleteContacto, submitContacto,
     exportCSV, showToast, init
   };
 })();
