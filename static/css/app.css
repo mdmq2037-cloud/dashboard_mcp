@@ -28,6 +28,11 @@ body { font-family: 'Inter', system-ui, -apple-system, sans-serif; }
 .mobile-nav-btn:hover { background: rgba(255,255,255,0.15); color: #fff; }
 .mobile-nav-btn.active { background: #fff; color: #1D4ED8; }
 
+.nav-btn-logout { color: #fca5a5; }
+.nav-btn-logout:hover { background: rgba(239,68,68,0.25); color: #fff; }
+.mobile-nav-btn-logout { color: #fca5a5; border-top: 1px solid rgba(255,255,255,0.1); margin-top: 0.5rem; padding-top: 1rem; }
+.mobile-nav-btn-logout:hover { background: rgba(239,68,68,0.25); color: #fff; }
+
 /* ── Tarjetas estadísticas ───────────────────────────────── */
 .stat-card {
   position: relative; overflow: hidden; border-radius: 1rem;

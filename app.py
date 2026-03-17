@@ -43,7 +43,9 @@ def login():
 @app.route('/logout')
 def logout():
     session.clear()
-    return redirect(url_for('login'))
+    return '''<!doctype html><html><head><meta charset="utf-8">
+<script>window.close();setTimeout(()=>{window.location.href='/login';},300);</script>
+</head><body></body></html>'''
 
 
 # ── Ruta principal ────────────────────────────────────────────────────────────
